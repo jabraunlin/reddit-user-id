@@ -1,0 +1,20 @@
+Stylometry:
+-Most systems based on lexical statistics
+-Common words (stop words) are actually more interesting
+than less frequent topical words
+
+-Writer invariant: property of a text which is invariant of its author
+  common properties: dist. of word lengths, sentence length,
+  avg word length, vocab richness, frequency of function words,
+  vocab richness, etc.
+
+  -avg. sentence length and avg. word length not very useful
+  -best is analysis of function words b/c used by authors subconsciously
+
+-One method: find frequency of (20-50) most common words in anonymous text.
+      The 50 dimensional vectors are then flattened into a plane with PCA.
+      If two works are placed on the same plane, they are likely to have
+      the same author.
+
+-Rare Pairs: technique for identifying style based on collocation.
+  collocation: word sequences appear more often than just by chance
