@@ -18,3 +18,37 @@ than less frequent topical words
 
 -Rare Pairs: technique for identifying style based on collocation.
   collocation: word sequences appear more often than just by chance
+
+-Punctuation use a good indicator as well
+
+1.)
+Mendenhall's Characteristic Curves of Composition
+  -def: word length distributions will look the same among different works of authors
+  -implementation: plot the word frequencies for each given user
+
+2.)
+Kilgariff's Chi-Squared Method
+    -def: most commonly used words should be used in similar frequencies
+    implementation: -Oversample the anonymous text to be proportionate to the known user's corpus
+                    -combine the corpora of the anonymous user with each user, one by one.
+                    -Take the n most common words (n is usually 100-1000, use smaller n if
+                    you have a smaller document. Or use stop words.)
+                    -Calculate Ei: how frequent the word should have come up in the anonymous text
+                    by dividing each frequency of n words by the size of the known corpus
+                    -calculate chi-squared for each token: x^2 = sum((Ci-Ei)^2)/Ei
+                    -the smaller the chi value, the more similar the two corpora
+
+
+
+
+
+
+
+
+
+
+
+
+
+References:
+https://programminghistorian.org/en/lessons/introduction-to-stylometry-with-python
