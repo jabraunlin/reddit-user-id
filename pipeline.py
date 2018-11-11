@@ -33,6 +33,17 @@ df_users = df1.groupby('author', 'subreddit').agg(
 comments = df.groupBy("author", 'subreddit').agg(F.collect_list("body"))
 join_comments_udf = udf(lambda x: ' '.join(x), StringType())
 df_join_comments = comments.withColumn('corpus', join_comments_udf(comments['collect_list(body)']))
+#Count and drop hyperlinks
+def count_links(s):    
+    num_links = len(re.findall(r'\(http.+\)',s)[0].split(')('))
+    return num_links
+count_links_udf = udf(count_links, IntegerType())
+df_join_comments = df_join_comments.withColumn('link_count', count_links_udf(df_join_comments['corpus']))
+def drop_links(s):
+    return re.sub(r'\(http.+\)','',s)
+drop_links_udf = udf(drop_links, StringType())
+df_join_comments = df_join_comments.withColumn('corpus', drop_links_udf(df_join_comments['corpus']))
+
 # Tokenize words, create new df called tokens
 tokenizer = Tokenizer(inputCol="corpus", outputCol="words")
 tokens = tokenizer.transform(df_join_comments)
