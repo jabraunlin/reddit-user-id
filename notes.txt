@@ -38,8 +38,34 @@ Kilgariff's Chi-Squared Method
                     -calculate chi-squared for each token: x^2 = sum((Ci-Ei)^2)/Ei
                     -the smaller the chi value, the more similar the two corpora
 
+3. )
+Burrow's Delta Method
+    -def: measure the distance between most common words of all corpora
+    implementation: -Create a corpus from all users' corpora
+                    -Find the n most frequent words in the corpus
+                    -For each word, calculate frequency of that word/ total number in the user's subcorpus
+                    -Turn each percent into a z score by subtracting the mean and dividing by std. dev
+                    -Calculate delta score by taking the average of the absolute values of differences between
+                       the z scores when comparing two candidates (cosine actually will outperform)
+                    -Use Wurzburg Distance (cosine distance) instead because the 'stylistic profile' of a user is better represented
+                        by the pattern of over and under-utilized words rather than the magnitude
+
+4. ) Gunning-Fog Readability Index
+    -def: calculates reading level needed to understand text
+    implementation: 0.4 * (avg. sentence length + 100 * compex word ratio)
 
 
+
+
+
+
+Reddit Formatting: Generally follows Markdown
+[](): link
+* * or _ _: italic
+** ** or __ __: bold
+"    " (4 spaces): block code
+#, ##, ###: Headline 1 , 2, 3
+***: Horizontal Rule (horizontal line)
 
 
 
@@ -52,3 +78,4 @@ Kilgariff's Chi-Squared Method
 
 References:
 https://programminghistorian.org/en/lessons/introduction-to-stylometry-with-python
+https://academic.oup.com/dsh/article/32/suppl_2/ii4/3865676
