@@ -4,12 +4,14 @@ from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType, FloatType, IntegerType, ArrayType
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import LogisticRegression
-from pyspark.ml.feature import CountVectorizer, Tokenizer
+from pyspark.ml.feature import CountVectorizer, Tokenizer, HashingTF, StandardScaler
 from pyspark.ml.feature import StopWordsRemover
 import re
 import matplotlib.pyplot as plt
 import nltk
 import numpy as np
+from nltk.corpus import stopwords
+from nltk.tokenize import TweetTokenizer
 
 # ssh -NfL 48888:localhost:48888 mpg_website
 
@@ -42,7 +44,7 @@ def count_links(s):
 
 
 count_links_udf = udf(count_links, IntegerType())
-df_join_comments = df_join_comments.withColumn(
+df_count_links = df_join_comments.withColumn(
     'link_count', count_links_udf(df_join_comments['corpus']))
 
 
@@ -51,7 +53,7 @@ def drop_links(s):
 
 
 drop_links_udf = udf(drop_links, StringType())
-df_join_comments = df_join_comments.withColumn('corpus', drop_links_udf(df_join_comments['corpus']))
+df_drop_links = df_count_links.withColumn('corpus', drop_links_udf(df_count_links['corpus']))
 
 
 def count_bold(s):
@@ -177,7 +179,7 @@ def count_newlines(s):
 
 count_newlines_udf = udf(count_newlines, IntegerType())
 df_count_newlines = df_drop_headlines.withColumn(
-    'newline_count', count_newlines_udf(df_count_newlines['corpus']))
+    'newline_count', count_newlines_udf(df_drop_headlines['corpus']))
 
 
 def drop_newlines(s):
@@ -190,6 +192,16 @@ def drop_newlines(s):
 drop_newlines_udf = udf(drop_newlines, StringType())
 df_drop_newlines = df_count_newlines.withColumn(
     'corpus', drop_newlines_udf(df_count_newlines['corpus']))
+
+
+def tokenize(s):
+    s = s.lower()
+    token = TweetTokenizer()
+    return token.tokenize(s)
+
+
+tokenize_udf = udf(tokenize, ArrayType(StringType()))
+df_tokens = df_drop_newlines.withColumn('tokens', tokenize_udf(df_drop_newlines['corpus']))
 
 
 def drop_punct(s):
@@ -215,7 +227,7 @@ def word_length(words):
 word_length_udf = udf(word_length, ArrayType(IntegerType()))
 word_length_df = tokens.withColumn('word_lengths', word_length_udf(tokens['words']))
 total_words_udf = udf(lambda x: len(x), IntegerType())
-total_words_df = word_length_df.withColumn('total_words', word_length_udf(word_length_df['words']))
+total_words_df = word_length_df.withColumn('total_words', total_words_udf(word_length_df['words']))
 plot_df = total_words_df.orderBy(('total_words'), ascending=False).limit(10)
 
 
@@ -232,3 +244,41 @@ for i in MCCC.rdd.collect():
     z = np.array(y)[idx]
     plt.plot(range(15), z)
     word_freqs[i[0]] = z
+
+# find RMSE for each of the users
+word_lengths = {}
+for key, value in word_freqs1.items():
+    error_values = {}
+    for k, v in word_freqs2.items():
+        rmse = np.mean(np.sqrt((v-value)**2))
+        error_values[k] = rmse
+    word_lengths[key] = error_values
+
+# Create a list of function words
+stops = stopwords.words('english')
+x = [i.split("'")for i in stops]
+stops = [i[0] for i in x]
+stops = list(set(stops))
+slang_stops = ['gonna', 'coulda', 'shoulda',
+               'lotta', 'lots', 'oughta', 'gotta', 'ain', 'sorta', 'kinda', 'yeah', 'whatever', 'cuz', 'ya', 'haha', 'lol', 'eh']
+puncts = ['!', ':', '...', '.', '%', '$', "'", '"', ';']
+formattings = ['##', '__', '_', '    ', '*', '**']
+stops = stops.extend(slang_stops).extend(puncts).extend(formattings)
+
+
+def stop_words_filter(s):
+    return [i for i in s if i in stops]
+
+
+stop_words_udf = udf(stop_words_filter, ArrayType(StringType()))
+df_stop_words = df_tokens.withColumn('stop_words', stop_words_udf(df_tokens['tokens']))
+
+
+hashingTF = HashingTF(numFeatures=153, inputCol='stop_words', outputCol='features')
+tf = hashingTF.transform(df_stop_words)
+
+tf_norm = Normalizer(inputCol="features", outputCol="features_norm", p=1).transform(tf)
+
+stdscaler = StandardScaler(inputCol='features_norm', outputCol='scaled', withMean=True)
+scale_fit = stdscaler.fit(tf_norm)
+scaled = scale_fit.transform(tf_norm)
