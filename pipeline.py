@@ -12,6 +12,7 @@ import nltk
 import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
+import pandas as pd
 
 # ssh -NfL 48888:localhost:48888 mpg_website
 
@@ -263,7 +264,9 @@ slang_stops = ['gonna', 'coulda', 'shoulda',
                'lotta', 'lots', 'oughta', 'gotta', 'ain', 'sorta', 'kinda', 'yeah', 'whatever', 'cuz', 'ya', 'haha', 'lol', 'eh']
 puncts = ['!', ':', '...', '.', '%', '$', "'", '"', ';']
 formattings = ['##', '__', '_', '    ', '*', '**']
-stops = stops.extend(slang_stops).extend(puncts).extend(formattings)
+stops.extend(slang_stops)
+stops.extend(puncts)
+stops.extend(formattings)
 
 
 def stop_words_filter(s):
@@ -282,3 +285,288 @@ tf_norm = Normalizer(inputCol="features", outputCol="features_norm", p=1).transf
 stdscaler = StandardScaler(inputCol='features_norm', outputCol='scaled', withMean=True)
 scale_fit = stdscaler.fit(tf_norm)
 scaled = scale_fit.transform(tf_norm)
+
+
+# NEW IPYNB
+
+import pyspark as ps
+from pyspark.sql import functions as F
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType, FloatType, IntegerType, ArrayType
+from pyspark.ml import Pipeline
+from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.feature import CountVectorizer, Tokenizer, HashingTF, StandardScaler, Normalizer
+from pyspark.ml.feature import StopWordsRemover
+import re
+import matplotlib.pyplot as plt
+import nltk
+import numpy as np
+from nltk.corpus import stopwords
+from nltk.tokenize import TweetTokenizer
+import pandas as pd
+
+
+spark = (
+    ps.sql.SparkSession.builder
+    .master("local[4]")
+    .appName("project")
+    .getOrCreate()
+)
+
+sc = spark.sparkContext
+
+
+df = spark.read.json("42_users.json")
+
+
+df1, df2 = df.randomSplit([0.5, 0.5])
+
+df2.groupby('author').agg(F.count('body')).show()
+
+df1.groupby('author').agg(F.count('body')).show()
+
+comments1 = df1.groupBy("author").agg(F.collect_list("body"))
+join_comments_udf = udf(lambda x: ' '.join(x), StringType())
+df1_join_comments = comments1.withColumn(
+    'corpus', join_comments_udf(comments1['collect_list(body)']))
+
+
+def count_links(s):
+    try:
+        num_links = len(re.findall(r'\(http.+\)', s)[0].split(')('))
+        return num_links
+    except:
+        return 0
+
+
+count_links_udf = udf(count_links, IntegerType())
+df_count_links1 = df1_join_comments.withColumn(
+    'link_count', count_links_udf(df1_join_comments['corpus']))
+df_count_links1.show(3)
+
+
+def drop_links(s):
+    return re.sub(r'\(http.+\)', '', s)
+
+
+drop_links_udf = udf(drop_links, StringType())
+df_drop_links1 = df_count_links1.withColumn('corpus', drop_links_udf(df_count_links1['corpus']))
+
+
+def tokenize(s):
+    s = s.lower()
+    token = TweetTokenizer()
+    return token.tokenize(s)
+
+
+tokenize_udf = udf(tokenize, ArrayType(StringType()))
+df_tokens1 = df_drop_links1.withColumn('tokens', tokenize_udf(df_drop_links1['corpus']))
+
+
+def find_words(s):
+    return [i for i in s if i.isalpha()]
+
+
+find_words_udf = udf(find_words, ArrayType(StringType()))
+df_find_words1 = df_tokens1.withColumn('words', find_words_udf(df_tokens1['tokens']))
+
+
+def word_length(words):
+    return [len(word) for word in words]
+
+
+word_length_udf = udf(word_length, ArrayType(IntegerType()))
+word_length_df1 = df_find_words1.withColumn(
+    'word_lengths', word_length_udf(df_find_words1['words']))
+total_words_udf = udf(lambda x: len(x), IntegerType())
+total_words_df1 = word_length_df1.withColumn(
+    'total_words', total_words_udf(word_length_df1['words']))
+
+
+# MCCC1 = total_words_df1.select('author', 'word_lengths', 'total_words')
+# word_freqs1 = {}
+# for i in MCCC1.rdd.collect():
+#     x = []
+#     y = []
+#     for k, v in (dict(nltk.FreqDist(i[1]))).items():
+#         x.append(k)
+#         y.append(v / i[2])
+#     idx = np.argsort(x)[1:12]
+#     z = np.array(y)[idx]
+#     plt.plot(range(1,12), z)
+#     word_freqs1[i[0]] = z
+
+comments2 = df2.groupBy("author").agg(F.collect_list("body"))
+join_comments_udf = udf(lambda x: ' '.join(x), StringType())
+df2_join_comments = comments2.withColumn(
+    'corpus', join_comments_udf(comments2['collect_list(body)']))
+
+
+def count_links(s):
+    try:
+        num_links = len(re.findall(r'\(http.+\)', s)[0].split(')('))
+        return num_links
+    except:
+        return 0
+
+
+count_links_udf = udf(count_links, IntegerType())
+df_count_links2 = df2_join_comments.withColumn(
+    'link_count', count_links_udf(df2_join_comments['corpus']))
+
+
+def drop_links(s):
+    return re.sub(r'\(http.+\)', '', s)
+
+
+drop_links_udf = udf(drop_links, StringType())
+df_drop_links2 = df_count_links2.withColumn('corpus', drop_links_udf(df_count_links2['corpus']))
+
+
+def tokenize(s):
+    s = s.lower()
+    token = TweetTokenizer()
+    return token.tokenize(s)
+
+
+tokenize_udf = udf(tokenize, ArrayType(StringType()))
+df_tokens2 = df_drop_links2.withColumn('tokens', tokenize_udf(df_drop_links2['corpus']))
+
+
+def find_words(s):
+    return [i for i in s if i.isalpha()]
+
+
+find_words_udf = udf(find_words, ArrayType(StringType()))
+df_find_words2 = df_tokens2.withColumn('words', find_words_udf(df_tokens2['tokens']))
+
+
+def word_length(words):
+    return [len(word) for word in words]
+
+
+word_length_udf = udf(word_length, ArrayType(IntegerType()))
+word_length_df2 = df_find_words2.withColumn(
+    'word_lengths', word_length_udf(df_find_words2['words']))
+total_words_udf = udf(lambda x: len(x), IntegerType())
+total_words_df2 = word_length_df2.withColumn(
+    'total_words', total_words_udf(word_length_df2['words']))
+
+# MCCC2 = total_words_df2.select('author', 'word_lengths', 'total_words')
+# word_freqs2 = {}
+# for i in MCCC2.rdd.collect():
+#     x = []
+#     y = []
+#     for k, v in (dict(nltk.FreqDist(i[1]))).items():
+#         x.append(k)
+#         y.append(v / i[2])
+#     idx = np.argsort(x)[1:12]
+#     z = np.array(y)[idx]
+#     plt.plot(range(1,12), z)
+#     word_freqs2[i[0]] = z
+
+
+# #find RMSE for each of the users
+# word_lengths = {}
+# for key, value in word_freqs1.items():
+#     error_values = {}
+#     for k, v in word_freqs2.items():
+#         rmse = np.mean(np.sqrt((v-value)**2))
+#         error_values[k] = rmse
+#     word_lengths[key] = error_values
+
+# df = pd.DataFrame(word_lengths)
+# ax = df.plot(kind='bar', figsize=(16,8), title='RMSE of User Word Length Choices')
+# fig = ax.get_figure()
+# fig.savefig('word_length_errors.png')
+
+# fig, ax = plt.subplots(2,1,figsize=(10,12))
+# for key, value in word_freqs1.items():
+#     ax[0].plot(range(1,12), value, label=key)
+# ax[0].set_ylabel('% of Total Words')
+# ax[0].set_xlabel('Word Length')
+# ax[0].set_title('Word Choice Frequencies: Subset 1')
+# ax[0].legend()
+# for key, value in word_freqs2.items():
+#     ax[1].plot(range(1,12), value, label=key)
+# ax[1].set_ylabel('% of Total Words')
+# ax[1].set_xlabel('Word Length')
+# ax[1].set_title('Word Choice Frequencies: Subset 2')
+# ax[1].legend()
+# fig.savefig('word_lengths.png', bbox_inches='tight')
+
+stops = stopwords.words('english')
+x = [i.split("'")for i in stops]
+stops = [i[0] for i in x]
+stops = list(set(stops))
+slang_stops = ['gonna', 'coulda', 'shoulda',
+               'lotta', 'lots', 'oughta', 'gotta', 'ain', 'sorta', 'kinda', 'yeah', 'whatever', 'cuz', 'ya', 'haha', 'lol', 'eh']
+puncts = ['!', ':', '...', '.', '%', '$', "'", '"', ';']
+formattings = ['##', '__', '_', '    ', '*', '**']
+stops.extend(slang_stops)
+stops.extend(puncts)
+stops.extend(formattings)
+len(stops)
+
+
+def stop_words_filter(s):
+    return [i for i in s if i in stops]
+
+
+stop_words_udf = udf(stop_words_filter, ArrayType(StringType()))
+df_stop_words1 = total_words_df1.withColumn('stop_words', stop_words_udf(total_words_df1['tokens']))
+
+hashingTF = HashingTF(numFeatures=179, inputCol='stop_words', outputCol='features')
+tf1 = hashingTF.transform(df_stop_words1)
+
+tf_norm1 = Normalizer(inputCol="features", outputCol="features_norm", p=1).transform(tf1)
+
+stdscaler = StandardScaler(inputCol='features_norm', outputCol='scaled', withMean=True)
+scale_fit1 = stdscaler.fit(tf_norm1)
+scaled1 = scale_fit1.transform(tf_norm1)
+
+stop_words_udf = udf(stop_words_filter, ArrayType(StringType()))
+df_stop_words2 = total_words_df2.withColumn('stop_words', stop_words_udf(total_words_df2['tokens']))
+
+hashingTF = HashingTF(numFeatures=179, inputCol='stop_words', outputCol='features')
+tf2 = hashingTF.transform(df_stop_words2)
+
+tf_norm2 = Normalizer(inputCol="features", outputCol="features_norm", p=1).transform(tf2)
+
+stdscaler = StandardScaler(inputCol='features_norm', outputCol='scaled', withMean=True)
+scale_fit2 = stdscaler.fit(tf_norm2)
+scaled2 = scale_fit2.transform(tf_norm2)
+
+
+sims1 = scaled1.select('author', 'scaled')
+sims2 = scaled2.select('author', 'scaled')
+similarities = {}
+for i in sims1.rdd.collect():
+    similarity = {}
+    auth1, vec1 = i[0], i[1]
+    for j in sims2.rdd.collect():
+        auth2, vec2 = j[0], j[1]
+        cos = vec1.dot(vec2) / (vec2.norm(2)*vec1.norm(2))
+        similarity[auth2] = cos
+    similarities[auth1] = similarity
+
+pdf = pd.DataFrame(similarities)
+
+cols = pdf.columns
+mask = []
+for i in pdf:
+    mask.append(i == pdf.index)
+mask = np.array(mask)
+mask = mask.T
+
+matches = pdf.values[mask]
+
+non_matches = pdf.values[~mask]
+
+sample = pd.read_json('sample.json', lines=True)
+
+non_mas = non_matches.reshape(41, -1)
+
+non_mas_max = np.max(non_mas, axis=1)
+
+np.sum(matches > non_mas_max) / len(matches)
