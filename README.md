@@ -27,7 +27,7 @@ most closely resembles the curve of the anonymous text by determining the curve 
 By iterating through each pseudo-user in Subset 2 and comparing it to each of the users in Subset 1, MCCC was able to correctly identify 5 of the 7 users. While promising, this technique is too simplistic to be used at scale. 
 
 ![Errors](word_length_errors.png)
-![](word_length_erros_df.png)
+![Errores](word_errors_df.png)
 
 ###  
 
