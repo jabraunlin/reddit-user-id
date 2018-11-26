@@ -13,12 +13,22 @@ But these are all examples of large bodies of text written by professionals. Can
 
 ## Implementation
 
-For this project, I chose Reddit as the medium . All users on the site submit posts and comments anonymously under a given username, and everyone's comments are publicly accessible. The only information needed to create a Reddit account is an email, so some users have been known to create multiple accounts. Perhaps, if I'm lucky, I can identify two or more accounts that belong to the same user. 
+For this project, I wanted to see if I could answer these questions by analyzing users on Reddit. All users on the site submit posts and comments anonymously under a given username, and everyone's comments are publicly accessible. The only information needed to create a Reddit account is an email, so some users have been known to create multiple accounts. Perhaps, if I'm lucky, I can identify two or more accounts that belong to the same user. 
 
 Because this is an unsupervised learning problem, I needed some way to validate the accuracy of my model. To do this, I took a user's entire comment history and randomly pulled out half of their comments, creating a new pseudo-user with these comments. Then I measured my model's success in being able to correctly match this pseudo-user back to the original user those comments were pulled from out of a pool of n users. 
 
 ### Baseline
 
-One of the oldest techniques in stylometry dates back to the 1800's, where authors were compared by using the frequencies at which authors use words of different lengths. Some tend to use short two and three-letter words more often, while others tend to pull from a larger vocabulary. 
+One of the oldest techniques in stylometry dates back to the 1800's, where authors were compared by using the frequencies at which they use words of different lengths. Some tend to use short two and three-letter words more often, while others tend to pull from a larger vocabulary. The technique of using frequencies of these word lengths is commonly called Mendenhall's Characteristic Curves of Composition (MCCC). While fairly crude, this technique can still be used to identify authorship. We can determine whose curve of composition
+most closely resembles the curve of the anonymous text by determining the curve with the lowest average RMSE. MCCC was first tested on a small group of 7 randomly chosen Redditors.
+
+![Pseudo-users](word_lengths.png)
+
+By iterating through each pseudo-user in Subset 2 and comparing it to each of the users in Subset 1, MCCC was able to correctly identify 5 of the 7 users. While promising, this technique is too simplistic to be used at scale. 
+
+![Errors](word_length_errors.png)
+
+
+###  
 
 
