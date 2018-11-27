@@ -51,6 +51,19 @@ To further improve the model, I incoporated into the feature vector the use of p
 
 ![Prob_Density](prob_density.png)
 
+From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental that determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users  
+
+| Alpha      |  Cosine Threshold        | Power  |
+| :-------------: |:-------------:| :-----:|
+| 1%     | 0.542 | 99.29% |
+| 0.1%      | 0.597    |  96.65% |
+| 0.01% |    0.693   |  75.30%   |
+
+### Final Application
+
+A hierarchical clustering model was used to determine if any of the randomly chosen accounts were in fact authored by a common user. One user's comments were still split for reference and visualization purposes. The dendogram below displays authorship clustering analysis of 40 users. An alpha level of 0.1% was chosen considering there were fairly few users being compared and the chances of finding a false positive are minimal. 
+
+![cluster](cluster.png)
 
 
 
