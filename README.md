@@ -1,6 +1,7 @@
 # Identifying Reddit Users Based on Text Style Analysis
 
 
+
 ## Context
 
 For centuries, authors have been able to write anonymously with the notion that their true identity would never be uncovered. That has all changed in the past few years, however, as machine learning methods have improved the efficacy of stylometry. Stylometry is the study of literary style, and involves identifying an author's writing style by uncovering unique patterns in word choice, sentence structure, punctuation, and more.
@@ -51,7 +52,7 @@ To further improve the model, I incoporated into the feature vector the use of p
 
 ![Prob_Density](prob_density.png)
 
-From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental that determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users  
+From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental that determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users. 
 
 | Alpha      |  Cosine Threshold        | Power  |
 | :-------------: |:-------------:| :-----:|
