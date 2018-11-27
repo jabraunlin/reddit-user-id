@@ -63,9 +63,11 @@ From the distribution, I was able to determine critical values at which I can re
 
 A hierarchical clustering model was used to determine if any of the randomly chosen accounts were in fact authored by a common user. One user's comments were still split for reference and visualization purposes. The dendogram below displays authorship clustering analysis of 40 users. An alpha level of 0.1% was chosen considering there were fairly few users being compared and the chances of finding a false positive are minimal. 
 
-![cluster](cluster.png)
+![dendogram](dendogram.png)
 
+## Interpreting the Results
 
+The model created was remarkably accurate when applied to either a small group of users or to an anonymous body of text that was long (> 1,000 comments). Moderators of smaller subreddits can definitely use this method to look through their users and see if any of them could be alternate accounts that belong to a banned user. For subreddits with larger communities, this will be more difficult, unless likely suspects can be narrowed down to a smaller group before making the style comparison. 
 
 
 
