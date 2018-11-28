@@ -40,6 +40,8 @@ The results were much improved for this method. The 7 users previously analyzed 
 
 In addition to lexical analysis, we can also distinguish unique writing styles with syntax. Using nltk's Part-Of-Speech (POS) tagger and skip-grams, I found the 100 most commonly-used POS sequences and vectorized each user's frequency of use for them, as was performed with the function words. This model returned 90% accuracy for the same 40 users. However, by ensembling the two techniques together, I achieved 100% accuracy.
 
+![distribution](match_distro.png)
+
 ### Scaling Up
 
 By continuing to add random users, while still filtering out any users who have less than 200 comments, the model continued to perfectly predict authorship for up to 100 users. Past this point, accuracy began to slightly deteriorate all the way down to 92.2% when a user was identified out of a pool of 3,000 users.
