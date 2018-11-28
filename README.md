@@ -72,6 +72,18 @@ A hierarchical clustering model was used to determine if any of the randomly cho
 
 The model created was remarkably accurate when applied to either a small group of users or to an anonymous body of text that was long (> 1,000 comments). Moderators of smaller subreddits can definitely use this method to look through their users and see if any of them could be alternate accounts that belong to a banned user. For subreddits with larger communities, this will be more difficult, unless likely suspects can be narrowed down to a smaller group before making the style comparison. 
 
+## Sources
+
+Data was obtained from [Google BigQuery](https://bigquery.cloud.google.com/table/fh-bigquery:reddit_comments.all_starting_201501)
+
+Cited Research:
+
+[Understanding and explaining Delta measures for authorship attribution](https://academic.oup.com/dsh/article/32/suppl_2/ii4/3865676)
+
+[Authorship Attribution Using Small Sets of Frequent Part-of-Speech Skip-Grams](https://www.aaai.org/ocs/index.php/FLAIRS/FLAIRS16/paper/download/12985/12546)
+
+[Towards a better understanding of Burrows’s Delta in literary authorship attribution](http://www.aclweb.org/anthology/W15-0709)
+
 
 
 
