@@ -42,13 +42,13 @@ In addition to lexical analysis, we can also distinguish unique writing styles w
 
 ### Scaling Up
 
-By continuing to add random users, while still filtering out any users who have less than 200 comments, the model continued to perfectly predict authorship for up to 100 users. Past this point, accuracy began to slightly deteriorate all the way down to 92.2% when a user was identified out of a pool of 2,000 users.
+By continuing to add random users, while still filtering out any users who have less than 200 comments, the model continued to perfectly predict authorship for up to 100 users. Past this point, accuracy began to slightly deteriorate all the way down to 92.2% when a user was identified out of a pool of 3,000 users.
 
 The reason for this drop in accuracy is mostly attributable to lack of data. All users who had over 1,000 comments were still being predicted with 100% accuracy. It was those with a smaller comment history whom were not as easily identified. I also found that certain users had writing styles that were not very unique; the vast majority of their feature values hovered around the mean. This was the case with user KhasminFFBE shown below. Further, the introduction of more users increases the chance that some users will have highly similar styles of writing. If a user tends to "code switch", i.e. change their style of writing in different contexts, they may be accidentally identified as another user that has very similar writing tendencies. 
 
 ![Vector](vectors.png)
 
-To further improve the model, I incoporated into the feature vector the use of punctuation and certain formatting methods that are commonly used on Reddit (such as "\[ ]( )" used to display hyperlinks). I also added a few slang words that are commonly found on social media and that resemble some of the function words from before. These include words like "yeah", "gonna", and "haha". This boosted my model's performance to 93.8% accuracy. 
+To further improve the model, I incoporated into the feature vector the use of punctuation and certain formatting methods that are commonly used on Reddit (such as "\[ ]( )" used to display hyperlinks). I also added a few slang words that are commonly found on social media and that resemble some of the function words from before. These include words like "yeah", "gonna", and "haha". This boosted my model's performance to 93.8% accuracy in a group of 3,000 users.
 
 ![Prob_Density](prob_density.png)
 
