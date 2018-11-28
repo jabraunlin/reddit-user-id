@@ -1,6 +1,7 @@
 # Identifying Reddit Users Based on Text Style Analysis
 
 
+
 ## Context
 
 For centuries, authors have been able to write anonymously with the notion that their true identity would never be uncovered. That has all changed in the past few years, however, as machine learning methods have improved the efficacy of stylometry. Stylometry is the study of literary style, and involves identifying an author's writing style by uncovering unique patterns in word choice, sentence structure, punctuation, and more.
@@ -31,27 +32,29 @@ By iterating through each pseudo-user in Subset 2 and comparing it to each of th
 
 ### Modeling Burrow's Delta
 
-Many NLP applications such as topic modeling typically use TF-IDF to identify rare keywords that can be used to help describe the text. In stylometry, the most important words are actually function words, common words such as "about", "because", and "while". Authors commonly write about a broad range of topics, thus heavily varying the vocabulary they use. However, function words show up in every text, and their frequency of use tends to stay fairly consistent across different documents for a given author
+Many NLP applications such as topic modeling typically use TF-IDF to identify rare keywords that can be used to help describe the text. In stylometry, the most important words are actually function words, common words such as "about", "because", and "while". Authors commonly write about a broad range of topics, thus heavily varying the vocabulary they use. However, function words show up in every text, and their frequency of use tends to stay fairly consistent across different documents for a given author.
 
-For my analysis, 150 of some of the most commonly used function words were used to identify user writing styles by the Delta method. The frequencies of each function word were recorded and then standardized by subtracting the mean and dividing by the standard deviation, giving each features value the representation of a z-score. The result is a 150-dimensional vector that is positive in a feature dimension where the author uses a word more frequently than the average user, and negative where it is used less than average. The vector of a pseudo-user can then be compared to that of each user most accurately by measure of cosine similarity.
+For my analysis, 150 of some of the most commonly used function words were used to identify user writing styles by the Delta method. The frequencies of each function word were recorded and then standardized by subtracting the mean and dividing by the standard deviation, giving each feature's value the representation of a z-score. The result is a 150-dimensional vector that is positive in a feature dimension where the author uses a word more frequently than the average user, and negative where it is used less than average. The vector of a pseudo-user can then be compared to that of each user most accurately by measure of cosine similarity.
 
 The results were much improved for this method. The 7 users previously analyzed were now matched back to their correct user with 100% accuracy. Identifying users out of a random group of 40 (filtering out those who have less than 200 comments) returned 95% accuracy. 
 
 In addition to lexical analysis, we can also distinguish unique writing styles with syntax. Using nltk's Part-Of-Speech (POS) tagger and skip-grams, I found the 100 most commonly-used POS sequences and vectorized each user's frequency of use for them, as was performed with the function words. This model returned 90% accuracy for the same 40 users. However, by ensembling the two techniques together, I achieved 100% accuracy.
 
+![distribution](match_distro.png)
+
 ### Scaling Up
 
-By continuing to add random users, while still filtering out any users who have less than 200 comments, the model continued to perfectly predict authorship for up to 100 users. Past this point, accuracy began to slightly deteriorate all the way down to 92.2% when a user was identified out of a pool of 2,000 users.
+By continuing to add random users, while still filtering out any users who have less than 200 comments, the model continued to perfectly predict authorship for up to 100 users. Past this point, accuracy began to slightly deteriorate all the way down to 92.2% when a user was identified out of a pool of 3,000 users.
 
 The reason for this drop in accuracy is mostly attributable to lack of data. All users who had over 1,000 comments were still being predicted with 100% accuracy. It was those with a smaller comment history whom were not as easily identified. I also found that certain users had writing styles that were not very unique; the vast majority of their feature values hovered around the mean. This was the case with user KhasminFFBE shown below. Further, the introduction of more users increases the chance that some users will have highly similar styles of writing. If a user tends to "code switch", i.e. change their style of writing in different contexts, they may be accidentally identified as another user that has very similar writing tendencies. 
 
 ![Vector](vectors.png)
 
-To further improve the model, I incoporated into the feature vector the use of punctuation and certain formatting methods that are commonly used on Reddit (such as "\[ ]( )" used to display hyperlinks). I also added a few slang words that are commonly found on social media and that resemble some of the function words from before. These include words like "yeah", "gonna", and "haha". This boosted my model's performance to 93.8% accuracy. 
+To further improve the model, I incoporated into the feature vector the use of punctuation and certain formatting methods that are commonly used on Reddit (such as "\[ ]( )" used to display hyperlinks). I also added a few slang words that are commonly found on social media and that resemble some of the function words from before. These include words like "yeah", "gonna", and "haha". This boosted my model's performance to 93.8% accuracy in a group of 3,000 users.
 
 ![Prob_Density](prob_density.png)
 
-From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental that determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users  
+From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental than determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users. 
 
 | Alpha      |  Cosine Threshold        | Power  |
 | :-------------: |:-------------:| :-----:|
@@ -63,9 +66,23 @@ From the distribution, I was able to determine critical values at which I can re
 
 A hierarchical clustering model was used to determine if any of the randomly chosen accounts were in fact authored by a common user. One user's comments were still split for reference and visualization purposes. The dendogram below displays authorship clustering analysis of 40 users. An alpha level of 0.1% was chosen considering there were fairly few users being compared and the chances of finding a false positive are minimal. 
 
-![cluster](cluster.png)
+![dendogram](dendogram.png)
 
+## Interpreting the Results
 
+The model created was remarkably accurate when applied to either a small group of users or to an anonymous body of text that was long (> 1,000 comments). Moderators of smaller subreddits can definitely use this method to look through their users and see if any of them could be alternate accounts that belong to a banned user. For subreddits with larger communities, this will be more difficult, unless likely suspects can be narrowed down to a smaller group before making the style comparison. 
+
+## Sources
+
+Data was obtained from [Google BigQuery](https://bigquery.cloud.google.com/table/fh-bigquery:reddit_comments.all_starting_201501)
+
+Cited Research:
+
+[Understanding and explaining Delta measures for authorship attribution](https://academic.oup.com/dsh/article/32/suppl_2/ii4/3865676)
+
+[Authorship Attribution Using Small Sets of Frequent Part-of-Speech Skip-Grams](https://www.aaai.org/ocs/index.php/FLAIRS/FLAIRS16/paper/download/12985/12546)
+
+[Towards a better understanding of Burrows’s Delta in literary authorship attribution](http://www.aclweb.org/anthology/W15-0709)
 
 
 
