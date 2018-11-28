@@ -16,19 +16,19 @@ For this project, I wanted to see if I could answer these questions by analyzing
 
 Because this is an unsupervised learning problem, I needed some way to validate the accuracy of my model. To do this, I took a user's entire comment history and randomly pulled out half of their comments, creating a new pseudo-user with these comments. Then I measured my model's success in being able to correctly match this pseudo-user back to the original user those comments were pulled from.
 
-![Users](user_split.png)
+![Users](media/user_split.png)
 
 ### Baseline
 
 One of the oldest techniques in stylometry dates back to the 1800's, where authors were compared by using the frequencies at which they use words of different lengths. Some tend to use short two and three-letter words more often, while others tend to pull from a larger vocabulary. The technique of using frequencies of these word lengths is commonly called Mendenhall's Characteristic Curves of Composition (MCCC). While fairly crude, this technique can still be used to identify authorship. We can determine whose curve of composition
 most closely resembles the curve of the anonymous text by determining the curve with the lowest average RMSE. MCCC was first tested on a small group of 7 randomly chosen Redditors.
 
-![Pseudo-users](word_lengths.png)
+![Pseudo-users](media/word_lengths.png)
 
 By iterating through each pseudo-user in Subset 2 and comparing it to each of the users in Subset 1, MCCC was able to correctly identify 5 of the 7 users. While promising, this technique is too simplistic to be used at scale. 
 
-![Errors](word_length_errors.png)
-![Errores](word_errors_df.png)
+![Errors](media/word_length_errors.png)
+![Errores](media/word_errors_df.png)
 
 ### Modeling Burrow's Delta
 
@@ -40,7 +40,7 @@ The results were much improved for this method. The 7 users previously analyzed 
 
 In addition to lexical analysis, we can also distinguish unique writing styles with syntax. Using nltk's Part-Of-Speech (POS) tagger and skip-grams, I found the 100 most commonly-used POS sequences and vectorized each user's frequency of use for them, as was performed with the function words. This model returned 90% accuracy for the same 40 users. However, by ensembling the two techniques together, I achieved 100% accuracy.
 
-![distribution](match_distro.png)
+![distribution](media/match_distro.png)
 
 ### Scaling Up
 
@@ -48,11 +48,11 @@ By continuing to add random users, while still filtering out any users who have 
 
 The reason for this drop in accuracy is mostly attributable to lack of data. All users who had over 1,000 comments were still being predicted with 100% accuracy. It was those with a smaller comment history whom were not as easily identified. I also found that certain users had writing styles that were not very unique; the vast majority of their feature values hovered around the mean. This was the case with user KhasminFFBE shown below. Further, the introduction of more users increases the chance that some users will have highly similar styles of writing. If a user tends to "code switch", i.e. change their style of writing in different contexts, they may be accidentally identified as another user that has very similar writing tendencies. 
 
-![Vector](vectors.png)
+![Vector](media/vectors.png)
 
 To further improve the model, I incoporated into the feature vector the use of punctuation and certain formatting methods that are commonly used on Reddit (such as "\[ ]( )" used to display hyperlinks). I also added a few slang words that are commonly found on social media and that resemble some of the function words from before. These include words like "yeah", "gonna", and "haha". This boosted my model's performance to 93.8% accuracy in a group of 3,000 users.
 
-![Prob_Density](prob_density.png)
+![Prob_Density](media/prob_density.png)
 
 From the distribution, I was able to determine critical values at which I can reject the null hypothesis that a user is a non-match. Because incorrectly banning a user as a false positive is much more detrimental than determining a false negative, alpha should be as small as possible, but should also be chosen with respect to the total number of users. 
 
@@ -66,7 +66,7 @@ From the distribution, I was able to determine critical values at which I can re
 
 A hierarchical clustering model was used to determine if any of the randomly chosen accounts were in fact authored by a common user. One user's comments were still split for reference and visualization purposes. The dendogram below displays authorship clustering analysis of 40 users. An alpha level of 0.1% was chosen considering there were fairly few users being compared and the chances of finding a false positive are minimal. 
 
-![dendogram](dendogram.png)
+![dendogram](media/dendogram.png)
 
 ## Interpreting the Results
 
